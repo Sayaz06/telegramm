@@ -4737,9 +4737,11 @@ let offlineRetry = null;
 document.addEventListener("visibilitychange", ()=>{
   clearTimeout(offlineRetry);
   if(document.visibilityState==="visible" && tgReady){
-    loadDialogs(true);
-    if(activeChatId) markRead(activeChatId);
-    setOnline(true, true);
+    ensureAlive().then(()=>{
+      loadDialogs(true);
+      if(activeChatId) markRead(activeChatId);
+      setOnline(true, true);
+    });
   }else{
     // keluar app: hantar offline SERTA-MERTA, ulang beberapa kali supaya pasti sampai
     setOnline(false, true);
@@ -4751,6 +4753,25 @@ document.addEventListener("visibilitychange", ()=>{
 document.addEventListener("freeze", ()=> setOnline(false, true));
 // ── Status "dalam talian" macam app Telegram biasa ──
 // Telegram rasmi hantar status online setiap ~60s semasa app dibuka, dan offline bila ditutup.
+// Selepas phone tidur, WebSocket sering "mati senyap" — uji 3 saat, kalau tak balas terus sambung baru
+let aliveBusy = null;
+function ensureAlive(){
+  if(!client) return Promise.resolve();
+  if(aliveBusy) return aliveBusy;
+  aliveBusy = (async ()=>{
+    try{
+      await Promise.race([
+        client.invoke(new Api.help.GetNearestDc()),
+        new Promise((_,rej)=> setTimeout(()=> rej(new Error("mati")), 3000))
+      ]);
+    }catch(e){
+      try{ await client.disconnect(); }catch(_){}
+      try{ await client.connect(); }catch(_){}
+    }
+    aliveBusy = null;
+  })();
+  return aliveBusy;
+}
 let onlineTimer = null, lastOnlineState = null;
 async function setOnline(on, force){
   if(!tgReady || !client) return;
