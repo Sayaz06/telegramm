@@ -171,7 +171,7 @@ a{color:var(--accent);text-decoration:none}
 /* Hanya kotak carian yang bergerak: naik menutup tajuk; tab carian memang sedia di belakangnya */
 #sidebar.search-mode #sidebar-header{position:absolute;top:0;left:0;right:0;pointer-events:none;transform-origin:16px 0;animation:hdrShrink .3s cubic-bezier(.2,.8,.2,1) forwards}
 #sidebar.search-mode #search-wrap{border-bottom:none;padding-bottom:6px;animation:srchUp .3s cubic-bezier(.2,.8,.2,1)}
-#sidebar.search-leaving #search-wrap{animation:srchDown .3s cubic-bezier(.2,.8,.2,1)}
+#sidebar.search-leaving #search-wrap{margin-bottom:-56px;animation:srchDown .3s cubic-bezier(.2,.8,.2,1)}
 #sidebar.search-leaving #sidebar-header{transform-origin:16px 0;animation:hdrGrow .3s cubic-bezier(.2,.8,.2,1)}
 #gs-tabs-wrap{display:none;position:relative;z-index:2;height:56px;padding:0 12px 11px;box-sizing:border-box;border-bottom:1px solid var(--border);background:var(--sidebar-bg)}
 #sidebar.search-mode #gs-tabs-wrap{display:block}
