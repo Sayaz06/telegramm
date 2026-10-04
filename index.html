@@ -1611,11 +1611,15 @@ function msgPreview(m){
   return t;
 }
 
-async function loadDialogs(){
+let lastFullDialogs = 0;
+async function loadDialogs(light){
   if(!client || !tgReady) return;
+  // "ringan" = tarik 25 chat teratas sahaja & gabung (bukan muat semula semua) — penuh setiap 10 minit
+  if(light && Date.now() - lastFullDialogs > 600000) light = false;
+  if(!light) lastFullDialogs = Date.now();
   try{
-    const ds = await client.getDialogs({ limit: 100 });
-    dialogs = ds.filter(d=>d.entity).map(d=>{
+    const ds = await client.getDialogs({ limit: light ? 25 : 100 });
+    const fresh = ds.filter(d=>d.entity).map(d=>{
       const e = d.entity;
       const cid = peerKey(e);
       entities.set(cid, e);
@@ -1639,6 +1643,10 @@ async function loadDialogs(){
         online: !!(e.status && e.status.className==="UserStatusOnline"),
       };
     });
+    if(light && dialogs.length){
+      const seen = new Set(fresh.map(x=>x.cid));
+      dialogs = [...fresh, ...dialogs.filter(x=>!seen.has(x.cid))];
+    }else dialogs = fresh;
     renderDialogs();
     cacheSet("dialogs", dialogs);
     loadAvatars();
@@ -4729,7 +4737,7 @@ let offlineRetry = null;
 document.addEventListener("visibilitychange", ()=>{
   clearTimeout(offlineRetry);
   if(document.visibilityState==="visible" && tgReady){
-    loadDialogs();
+    loadDialogs(true);
     if(activeChatId) markRead(activeChatId);
     setOnline(true, true);
   }else{
